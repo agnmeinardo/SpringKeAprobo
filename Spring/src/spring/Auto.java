@@ -8,14 +8,17 @@ public class Auto
 	
    public String nombre = "MiAuto";
 
-   @Injected 
+   @Injected
    public Motor motor; 
     
-   //@Injected(count=4) 
-   //private Rueda[] ruedas; 
+   @Injected 
+   public Rueda rueda; 
     
-   //@Injected(count=4) 
-   //private List<Butaca> butacas; 
+   @Injected(count=4) 
+   public List<Butaca> butacas; // Falta hacer Butaca[]
+   
+   @Injected(singleton=true)
+   public Piston piston; // singleton o singleton=true
     
    //@Injected(implementation=AutostereoSonyImple.class) 
    //private Autostereo autostereo; 

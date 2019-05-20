@@ -1,15 +1,19 @@
 package spring;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Factory
 {
 	
-	public <T> T getObject(Class<T> clase) throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException,
+	
+	
+	public static <T> T getObject(Class<T> clase) throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException,
     InstantiationException, IllegalAccessException, InvocationTargetException{
 		
 		Class<?> cls = Class.forName(clase.getName());
@@ -25,17 +29,23 @@ public class Factory
 		
 	}
 	
-	public <T> void procesar(T objetoRaiz) throws ClassNotFoundException, InstantiationException, IllegalAccessException{
+	private static <T> void procesar(T objetoRaiz) throws ClassNotFoundException, InstantiationException, IllegalAccessException{
 		
 		Field[] campos = objetoRaiz.getClass().getDeclaredFields();
+		
+		ArrayList singletons = new ArrayList<>();
 		
 		for (int i=0 ; i < campos.length ; i++) {
 			
 			Field campo = campos[i];
 			
-			///
+			System.out.println(campo.getType().toString()); // List
+			
+			
 			Class<?> clase = campo.getType(); // Devuelve el tipo (la clase) del campo
+			
 			Injected injected = campo.getAnnotation(Injected.class); // Devuelve la anotacion del campo pasandole como param la interfaz de la annotation
+			
 			
 			if (injected != null){
 				
@@ -43,21 +53,54 @@ public class Factory
 				
 				try {
 					
+					// Modifico para que el campo pueda ser modificable/accesible
 					boolean accessible = campo.isAccessible();
-					
-					
 					campo.setAccessible(true);
 					
-					Class<?> cls = Class.forName(clase.getName());
-					T objeto = null;
-					objeto = (T) cls.getConstructor().newInstance();
+					// Chequeo el caso de que sea una lista
+					if (injected.count() > 1) {
+					
+						// Acá obtengo de qué tipo tiene que ser los elementos de la lista
+						ParameterizedType tipo = (ParameterizedType)campo.getGenericType();
+						Class<?> specificListClass = (Class<?>) tipo.getActualTypeArguments()[0];
+						System.out.println(specificListClass);
+			        
+						List lista = new ArrayList();
+						
+						for (int j=1; j<= injected.count(); j++){
+							T objeto = null;
+							objeto = (T) specificListClass.getConstructor().newInstance();
+							lista.add(objeto);
+						}
+						
+						campo.set(objetoRaiz, lista);
+						
+					} else {
+						// Genero la clase e instancio el objeto a usar
+						Class<?> cls = Class.forName(clase.getName());
+						//System.out.println(clase.getName());
+						T objeto = null;
+						objeto = (T) cls.getConstructor().newInstance();
+						
+						
+						if(injected.singleton()){
+							singletons.add(objeto);
+						}
+						
+						campo.set(objetoRaiz, objeto);
+					}
+					
+					
+					
 				
 					
-					campo.set(objetoRaiz, objeto);
+					
+					
+					
+					
+					
 					
 					// Chequeo info setteada
-					
-					System.out.print(objeto.getClass().toString());
 					
 					campo.setAccessible(accessible);
 					
@@ -69,8 +112,7 @@ public class Factory
 					
 					
 					*/
-					
-				
+
 				
 				} catch (IllegalArgumentException | InvocationTargetException | NoSuchMethodException
 						| SecurityException e) {
@@ -81,8 +123,8 @@ public class Factory
 
 				
 			} else {
-				campo.set(objetoRaiz, null);
-			}
+				
+			} 
 			
 			
 			

@@ -4,6 +4,7 @@ package spring;
 public class Rueda
 {
 	
+	public String nombre = "miRueda";
 	//@Injected 
 	//private Cubierta cubierta;
 	
